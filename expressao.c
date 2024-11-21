@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #define PI 3.14159265358979323846
+#define MAX 100
 
 static float *numerosEmPilha;
 
@@ -24,7 +25,7 @@ float SparaF(char numeroString[]){
     return numero;
 }
 
-float getValor(char *Str){
+float getValor(char* Str){
     int contadorPrincipal, contadorNumero = 0, numeroGuardado = 0, numeroDeElementos = 1, tamanhoPadrao = 10;
     char numeroString[20];
     float numero;
@@ -78,20 +79,19 @@ float getValor(char *Str){
                 numerosEmPilha[numeroDeElementos-1] = pow(numerosEmPilha[numeroDeElementos-1], numerosEmPilha[numeroDeElementos]);
                 break;
             case 'l':
-                contadorPrincipal += 2;
                 numerosEmPilha[numeroDeElementos-1] = log10(numerosEmPilha[numeroDeElementos-1]);
                 break;
             case 's':
-                contadorPrincipal += 2;
                 numerosEmPilha[numeroDeElementos-1] = sin((PI/180) * numerosEmPilha[numeroDeElementos-1]);
                 break;
             case 'c':
-                contadorPrincipal += 2;
                 numerosEmPilha[numeroDeElementos-1] = cos((PI/180) * numerosEmPilha[numeroDeElementos-1]);
                 break;
             case 't':
-                contadorPrincipal++;
                 numerosEmPilha[numeroDeElementos-1] = tan((PI/180) * numerosEmPilha[numeroDeElementos-1]);
+                break;
+            case 'r':
+                numerosEmPilha[numeroDeElementos-1] = sqrt(numerosEmPilha[numeroDeElementos-1]);
                 break;
             default:
                 break;
@@ -99,4 +99,57 @@ float getValor(char *Str){
         }
     }
     return numerosEmPilha[numeroDeElementos-1];
+}
+
+int verificaOperador(char* token) {
+    return (strcmp(token, "+") == 0 || strcmp(token, "-") == 0 || strcmp(token, "*") == 0 || strcmp(token, "/") == 0 || 
+            strcmp(token, "^") == 0 || strcmp(token, "sen") == 0 || strcmp(token, "cos") == 0 || strcmp(token, "tan") == 0 || 
+            strcmp(token, "log") == 0);
+}
+
+static char* pilha[MAX];
+
+char* getFormaInFixa(char* posFixa) {
+    
+    int topo = -1;
+
+    char* token = strtok(posFixa, " ");
+    
+    while (token != NULL) {
+        if (verificaOperador(token)) {
+
+            if (strcmp(token, "sen") == 0 || strcmp(token, "cos") == 0 || strcmp(token, "tan") == 0 || strcmp(token, "log") == 0) {
+
+                char* operador = pilha[topo--];
+                int tamanho = strlen(operador) + strlen(token) + 3;
+                char* infix = (char*)malloc(tamanho * sizeof(char));
+                snprintf(infix, tamanho, "%s(%s)", token, operador);
+                pilha[++topo] = infix;
+                
+            } else if (strcmp(token, "^") == 0) {  
+
+                char* operand2 = pilha[topo--];
+                char* operand1 = pilha[topo--];
+                int tamanho = strlen(operand1) + strlen(operand2) + 4; 
+                char* infix = (char*)malloc(tamanho * sizeof(char));
+                snprintf(infix, tamanho, "(%s ^ %s)", operand1, operand2); 
+                pilha[++topo] = infix;
+                
+            } else {
+
+                char* operand2 = pilha[topo--];
+                char* operand1 = pilha[topo--];
+                int tamanho = strlen(operand1) + strlen(operand2) + 5; 
+                char* infix = (char*)malloc(tamanho * sizeof(char));
+                snprintf(infix, tamanho, "(%s %s %s)", operand1, token, operand2); 
+                pilha[++topo] = infix;
+            }
+        } else {
+
+            pilha[++topo] = token;
+        }
+        token = strtok(NULL, " ");
+    }
+
+    return pilha[topo];
 }
